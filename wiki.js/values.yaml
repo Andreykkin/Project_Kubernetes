@@ -1,0 +1,9 @@
+postgresql:
+  enabled: false
+  postgresqlHost: "postgresql"
+  postgresqlUser: "wiki"
+  postgresqlDatabase: "wiki"
+
+  # Connect to the secret you just created
+  existingSecret: "wiki-postgresql-secret"
+  existingSecretKey: "postgresql-password"
