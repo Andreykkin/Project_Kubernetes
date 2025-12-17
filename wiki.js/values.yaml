@@ -1,9 +1,11 @@
-postgresql:
-  enabled: false
-  postgresqlHost: "postgresql"
-  postgresqlUser: "wiki"
-  postgresqlDatabase: "wiki"
+project: default
+source:
+    values: |-
+      postgresql:
+        enabled: false
+        postgresqlHost: "postgresql"
+        postgresqlUser: "wiki"
+        postgresqlDatabase: "wiki"
+        existingSecret: "wiki-postgresql-password"
+        existingSecretKey: "postgresql-password"
 
-  # Connect to the secret you just created
-  existingSecret: "wiki-postgresql-secret"
-  existingSecretKey: "postgresql-password"
