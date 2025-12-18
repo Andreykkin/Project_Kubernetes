@@ -7,20 +7,20 @@ spec:
   project: default
   source:
     repoURL: https://charts.js.wiki
-    targetRevision: 2.2.23
+    targetRevision: 2.2.24
     chart: wiki
     helm:
       valuesObject:
         postgresql:
           enabled: false
-          postgresqlHost: "postgresql"
+          postgresqlHost: "postgresql-test"
           postgresqlUser: "wiki"
           postgresqlDatabase: "wiki"
           existingSecret: "wiki-postgresql-password"
           existingSecretKey: "postgresql-password"
       parameters:
         - name: ingress.hosts[0].host
-          value: wiki.k8s-25.sa
+          value: wiki-test.k8s-25.sa
         - name: ingress.className
           value: nginx
         - name: ingress.hosts[0].paths[0].path
