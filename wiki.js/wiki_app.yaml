@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://charts.js.wiki
     targetRevision: 2.2.23
-    chart: nginx-ingress
+    chart: wiki
     helm:
       valuesObject:
         postgresql:
