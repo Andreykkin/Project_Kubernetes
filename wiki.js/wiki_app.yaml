@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wikijs
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://charts.js.wiki
+    targetRevision: 2.2.23
+    chart: nginx-ingress
+    helm:
+      valuesObject:
+        postgresql:
+          enabled: false
+          postgresqlHost: "postgresql"
+          postgresqlUser: "wiki"
+          postgresqlDatabase: "wiki"
+          existingSecret: "wiki-postgresql-password"
+          existingSecretKey: "postgresql-password"
+      parameters:
+        - name: ingress.hosts[0].host
+          value: wiki.k8s-25.sa
+        - name: ingress.className
+          value: nginx
+        - name: ingress.hosts[0].paths[0].path
+          value: /
+        - name: ingress.hosts[0].paths[0].pathType
+          value: Prefix
+  destination:
+    namespace: production
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      enabled: false
+      prune: false
+      selfHeal: false
