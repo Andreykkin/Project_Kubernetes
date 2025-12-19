@@ -34,6 +34,7 @@ cd Project_Kubernetes
 ```
 ### Step Two: Create Persistent Storage for database:
 ```bash
+kubectl create namespace production
 kubectl apply -f Database/storageclass.yaml ;
 kubectl apply -f Database/persistent_volume.yaml ;
 kubectl apply -f Database/persistent_volume_claim.yaml -n production
@@ -57,6 +58,12 @@ GRANT ALL PRIVILEGES ON DATABASE wiki TO wiki;
 GRANT ALL PRIVILEGES ON SCHEMA public TO wiki;
 ```
 ### Step four: Deploy wiki application to ArgoCD
+#### Deploy secret with wiki postgres password
+```bash
+kubectl create secret generic wiki-postgresql-password \
+  --from-literal=postgresql-password='<wiki-user-password>' \:
+  -n production
+```
 #### Use ArgoCD UI or kubectl
 ##### Kubectl way
 ```bash
