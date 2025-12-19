@@ -34,7 +34,7 @@ cd Project_Kubernetes
 ```
 ### Step Two: Create Persistent Storage for database:
 ```bash
-kubectl create namespace production
+kubectl create namespace production ;
 kubectl apply -f Database/storageclass.yaml ;
 kubectl apply -f Database/persistent_volume.yaml ;
 kubectl apply -f Database/persistent_volume_claim.yaml -n production
