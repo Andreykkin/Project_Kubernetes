@@ -156,7 +156,7 @@ jobs:
                       "text": "*Branch:*\n${{ github.ref_name }}"
                     }
                   ]
-                },
+                }
               ]
             }
         env:
