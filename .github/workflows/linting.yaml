@@ -1,0 +1,131 @@
+name: Validate ArgoCD Applications
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-argocd:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install yq (YAML processor)
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+
+      - name: Install kubeval (Kubernetes validator)
+        run: |
+          wget https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
+          tar xf kubeval-linux-amd64.tar.gz
+          sudo mv kubeval /usr/local/bin/
+
+      - name: Find and validate ArgoCD Application files
+        id: validate
+        run: |
+          ERROR_FILES=""
+          ERROR_MESSAGES=""
+
+          # Ищем все YAML/JSON файлы (можете изменить путь на свой)
+          for file in $(find . -name "*.yaml" -o -name "*.yml" -o -name "*.json"); do
+            # Пропускаем файлы в директории .git
+            if [[ $file == *".git/"* ]]; then
+              continue
+            fi
+
+            # Проверяем, является ли файл ArgoCD Application
+            if grep -q "argoproj.io/v1alpha1" "$file" 2>/dev/null ||
+               grep -q "kind:.*Application" "$file" 2>/dev/null; then
+
+              echo "🔍 Validating ArgoCD Application: $file"
+
+              # Проверка синтаксиса YAML/JSON
+              if [[ $file == *.json ]]; then
+                if ! jq empty "$file" 2>/dev/null; then
+                  ERROR_FILES+="$file, "
+                  ERROR_MESSAGES+="❌ JSON syntax error in $file\n"
+                fi
+              else
+                if ! yq eval '.' "$file" > /dev/null 2>&1; then
+                  ERROR_FILES+="$file, "
+                  ERROR_MESSAGES+="❌ YAML syntax error in $file\n"
+                fi
+              fi
+            fi
+          done
+
+          # Удаляем последнюю запятую и пробел
+          ERROR_FILES=${ERROR_FILES%, }
+
+          # Сохраняем результаты для следующих шагов
+          if [ -n "$ERROR_FILES" ]; then
+            echo "error_files=$ERROR_FILES" >> $GITHUB_OUTPUT
+            echo "error_messages=$ERROR_MESSAGES" >> $GITHUB_OUTPUT
+            echo "has_errors=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_errors=false" >> $GITHUB_OUTPUT
+            echo "✅ All ArgoCD Application files are valid!"
+          fi
+
+      - name: Send Slack notification on error
+        if: steps.validate.outputs.has_errors == 'true'
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": ":x: ArgoCD Validation Failed in ${{ github.repository }}",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": ":x: ArgoCD Validation Failed"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n${{ github.ref_name }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Files with errors:*\n\`\`\`${{ steps.validate.outputs.error_files }}\`\`\`"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Error details:*\n\`\`\`${{ steps.validate.outputs.error_messages }}\`\`\`"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Workflow Run"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
