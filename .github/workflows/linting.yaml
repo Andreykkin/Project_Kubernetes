@@ -129,19 +129,19 @@ jobs:
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      - name: Send Slack notification on error
+      - name: Send Slack notification on success
         if: steps.validate.outputs.has_errors == 'false'
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
             {
-              "text": ":x: ArgoCD Validation Successful in ${{ github.repository }}",
+              "text": "ArgoCD Validation Successful in ${{ github.repository }}",
               "blocks": [
                 {
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": ":x: ArgoCD Validation Success"
+                    "text": "ArgoCD Validation Success"
                   }
                 },
                 {
